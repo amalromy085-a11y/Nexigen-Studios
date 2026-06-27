@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Code2, ShoppingCart, Paintbrush, ShieldCheck, 
-  Cpu, Layers, AppWindow, Cloud, ArrowRight, X 
+  Code2, Paintbrush, ShieldCheck, 
+  Cpu, Layers, AppWindow, ArrowRight, X 
 } from 'lucide-react';
 
 // Individual 3D Glass Tilt Card Component
@@ -10,21 +10,21 @@ function TiltCard({ service, onClick }) {
   const cardRef = useRef(null);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || window.innerWidth < 768);
+  }, []);
 
   const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
+    if (isTouchDevice || !cardRef.current) return;
     const card = cardRef.current;
     const rect = card.getBoundingClientRect();
-    
-    // Calculate mouse position relative to the card center
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
-
-    // Convert to percentage rotation (max 15 degrees)
-    const factor = 15;
+    const factor = 12;
     const rotateX = -(y / (rect.height / 2)) * factor;
     const rotateY = (x / (rect.width / 2)) * factor;
-
     setCoords({ x: rotateX, y: rotateY });
   };
 
@@ -37,35 +37,35 @@ function TiltCard({ service, onClick }) {
     <motion.div
       ref={cardRef}
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => !isTouchDevice && setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
       style={{
-        perspective: '1000px',
+        perspective: isTouchDevice ? 'none' : '1000px',
         cursor: 'pointer',
         height: '100%'
       }}
     >
       <motion.div
-        animate={{
+        animate={isTouchDevice ? {} : {
           rotateX: coords.x,
           rotateY: coords.y,
-          scale: isHovered ? 1.05 : 1,
-          translateZ: isHovered ? 20 : 0
+          scale: isHovered ? 1.03 : 1,
+          translateZ: isHovered ? 10 : 0
         }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20, mass: 0.8 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25, mass: 0.8 }}
         className="glass-panel"
         style={{
-          padding: '40px',
+          padding: 'clamp(24px, 4vw, 40px)',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           position: 'relative',
           overflow: 'hidden',
-          border: isHovered ? '1px solid rgba(0, 102, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
-          transformStyle: 'preserve-3d',
-          boxShadow: isHovered ? '0 20px 40px rgba(0, 102, 255, 0.15)' : 'none'
+          border: isHovered ? '1px solid rgba(0, 102, 255, 0.4)' : '1px solid rgba(15, 23, 42, 0.06)',
+          transformStyle: isTouchDevice ? 'flat' : 'preserve-3d',
+          boxShadow: isHovered ? '0 15px 30px rgba(0, 102, 255, 0.12)' : '0 2px 8px rgba(0,0,0,0.04)'
         }}
       >
         {/* Animated reflection overlay */}
@@ -83,7 +83,7 @@ function TiltCard({ service, onClick }) {
         />
 
         {/* Content */}
-        <div style={{ transform: 'translateZ(40px)', zIndex: 2 }}>
+        <div style={{ transform: isTouchDevice ? 'none' : 'translateZ(40px)', zIndex: 2 }}>
           {/* Icon Badge */}
           <div style={{
             width: '60px',
@@ -126,7 +126,7 @@ function TiltCard({ service, onClick }) {
           alignItems: 'center', 
           gap: '8px', 
           marginTop: '30px', 
-          transform: 'translateZ(30px)',
+          transform: isTouchDevice ? 'none' : 'translateZ(30px)',
           color: isHovered ? '#0066ff' : 'var(--color-text-muted)',
           fontWeight: 600,
           fontSize: '0.85rem',
@@ -154,14 +154,6 @@ export default function Services() {
       shortDesc: "Bespoke high-performance websites hand-coded for luxury branding and unmatched speed.",
       longDesc: "We build tailored websites from the ground up using React, Next.js, and modern tools. We avoid heavy template systems, ensuring your site is blazing fast, perfectly secure, and fully customized to your business operations. Every interaction is coded for extreme visual responsiveness.",
       features: ["React & Next.js Architecture", "Tailored Custom Integrations", "Optimized Loading Speed (95+)", "SEO Semantic Structuring"]
-    },
-    {
-      id: 'ecom',
-      icon: <ShoppingCart size={28} color="#ffffff" />,
-      title: "E-Commerce Solutions",
-      shortDesc: "Scalable online stores with immersive shopping layouts and friction-free user checkouts.",
-      longDesc: "Transform online shopping into a cinematic, high-conversion brand experience. We integrate Shopify, custom Stripe flows, and headless CMS frameworks to develop e-commerce storefronts that combine high-end design aesthetics with robust transactional stability.",
-      features: ["Headless Commerce Integration", "Seamless Stripe Checkouts", "Immersive Product 3D Previews", "Dynamic Inventory Pipelines"]
     },
     {
       id: 'uiux',
@@ -202,14 +194,6 @@ export default function Services() {
       shortDesc: "Feature-rich interactive applications engineered for scalability and high performance.",
       longDesc: "Full-stack web application development. We build scalable backend databases, API systems, and real-time stateful frontends that enable users to accomplish complex digital tasks smoothly on any device.",
       features: ["State-Driven Web Clients", "Secure User Authentications", "Websocket Real-Time Sync", "REST/GraphQL Middleware"]
-    },
-    {
-      id: 'cloud-platforms',
-      icon: <Cloud size={28} color="#ffffff" />,
-      title: "Cloud-Based Platforms",
-      shortDesc: "Secure cloud infrastructure, microservices, serverless frameworks, and global hosting.",
-      longDesc: "Deploy your digital assets securely on the global cloud. We architect AWS/Vercel pipelines, serverless functions, database scaling rules, and content delivery networks (CDNs) to keep your website online 100% of the time.",
-      features: ["AWS/Vercel Deployments", "Global CDN Distribution", "Automated Scalability Limits", "High-Security Firewalls"]
     }
   ];
 
